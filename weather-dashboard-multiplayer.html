@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard - Multiplayer</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .multiplayer-status {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .status-badge.online {
+            background: #4caf50;
+        }
+        
+        .status-badge.offline {
+            background: #f44336;
+        }
+        
+        .player-name {
+            color: white;
+            font-weight: bold;
+        }
+        
+        .player-name input {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            width: 150px;
+        }
+        
+        .search-section {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+            max-width: 500px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .search-box button {
+            padding: 12px 30px;
+            background: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .unit-toggle {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .unit-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .unit-btn.active {
+            background: white;
+            color: #667eea;
+        }
+        
+        .unit-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .current-weather {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+        }
+        
+        .current-weather .location {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .current-weather .time {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .weather-icon {
+            width: 120px;
+            height: 120px;
+            font-size: 80px;
+            line-height: 120px;
+            text-align: center;
+        }
+        
+        .weather-info {
+            flex: 1;
+        }
+        
+        .temperature {
+            font-size: 3.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.3em;
+            opacity: 0.95;
+            text-transform: capitalize;
+            margin-bottom: 20px;
+        }
+        
+        .weather-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .detail-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .detail-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .forecast-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .forecast-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
+        .forecast-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .forecast-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        
+        .forecast-day {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        
+        .forecast-icon {
+            font-size: 2.5em;
+            margin: 10px 0;
+        }
+        
+        .forecast-temp {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .forecast-temp-min {
+            font-size: 0.85em;
+            color: #666;
+        }
+        
+        .alerts {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .alerts h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .alert-item {
+            color: #856404;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+        
+        .players-list {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .players-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .player-item {
+            background: #f5f5f5;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .player-item.self {
+            border-left-color: #4caf50;
+            background: #f0f8f0;
+        }
+        
+        .player-info {
+            flex: 1;
+        }
+        
+        .player-city {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .player-temp {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .player-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .favorites {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .favorite-btn {
+            padding: 10px 15px;
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .favorite-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .no-data {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+        
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .weather-main {
+                flex-direction: column;
+                gap: 20px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .temperature {
+                font-size: 2.5em;
+            }
+            
+            .multiplayer-status {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Dashboard - Multiplayer</h1>
+            <p>Real-time weather with friends</p>
+        </div>
+        
+        <div class="multiplayer-status">
+            <div>
+                <span class="status-badge offline" id="firebaseStatus">❌ Offline</span>
+            </div>
+            <div class="player-name">
+                Your Name: <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            </div>
+            <div id="playersCount" style="color: white; font-weight: bold;">Players: 0</div>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Enter city name..."
+                    autocomplete="off"
+                >
+                <button onclick="searchWeather()">Search</button>
+            </div>
+            <div class="unit-toggle">
+                <button class="unit-btn active" onclick="setUnit('metric')">°C / km/h</button>
+                <button class="unit-btn" onclick="setUnit('imperial')">°F / mph</button>
+            </div>
+        </div>
+        
+        <div id="errorContainer"></div>
+        
+        <div class="dashboard">
+            <div class="main-content">
+                <div id="weatherContainer"></div>
+            </div>
+            <div class="sidebar">
+                <div class="card players-list">
+                    <div class="players-title">👥 Players Online</div>
+                    <div id="playersList">No players yet</div>
+                </div>
+                <div class="card">
+                    <div class="players-title">⭐ Favorite Cities</div>
+                    <div class="favorites" id="favoritesList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '430d60a8aa672bc0a6e71d6275433d3c';
+        const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+        
+        let currentUnit = 'metric';
+        let favorites = JSON.parse(localStorage.getItem('weatherFavorites')) || [];
+        let playerName = localStorage.getItem('playerName') || 'Anonymous Player';
+        let currentCity = null;
+        let currentWeather = null;
+        let db = null;
+        let currentPlayerId = generatePlayerId();
+        
+        const weatherIcons = {
+            '01d': '☀️', '01n': '🌙',
+            '02d': '⛅', '02n': '☁️',
+            '03d': '☁️', '03n': '☁️',
+            '04d': '☁️', '04n': '☁️',
+            '09d': '🌧️', '09n': '🌧️',
+            '10d': '🌦️', '10n': '🌧️',
+            '11d': '⛈️', '11n': '⛈️',
+            '13d': '❄️', '13n': '❄️',
+            '50d': '🌫️', '50n': '🌫️'
+        };
+        
+        function generatePlayerId() {
+            let id = localStorage.getItem('playerId');
+            if (!id) {
+                id = 'player_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('playerId', id);
+            }
+            return id;
+        }
+        
+        function initializeFirebase() {
+            // REPLACE THESE WITH YOUR FIREBASE CONFIG
+            const firebaseConfig = {
+                apiKey: "YOUR_API_KEY",
+                authDomain: "YOUR_AUTH_DOMAIN",
+                databaseURL: "YOUR_DATABASE_URL",
+                projectId: "YOUR_PROJECT_ID",
+                storageBucket: "YOUR_STORAGE_BUCKET",
+                messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+                appId: "YOUR_APP_ID"
+            };
+            
+            try {
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
+                }
+                db = firebase.database();
+                setupRealtimeListeners();
+                updateFirebaseStatus(true);
+            } catch (error) {
+                console.error('Firebase initialization error:', error);
+                updateFirebaseStatus(false);
+            }
+        }
+        
+        function updateFirebaseStatus(online) {
+            const badge = document.getElementById('firebaseStatus');
+            if (online) {
+                badge.textContent = '✅ Online';
+                badge.classList.add('online');
+                badge.classList.remove('offline');
+            } else {
+                badge.textContent = '❌ Offline';
+                badge.classList.add('offline');
+                badge.classList.remove('online');
+            }
+        }
+        
+        function setupRealtimeListeners() {
+            if (!db) return;
+            
+            // Listen for all players
+            db.ref('players').on('value', (snapshot) => {
+                const players = snapshot.val() || {};
+                displayPlayers(players);
+            });
+            
+            // Clean up when this player leaves
+            window.addEventListener('beforeunload', () => {
+                if (db) {
+                    db.ref('players/' + currentPlayerId).remove();
+                }
+            });
+        }
+        
+        function displayPlayers(players) {
+            const list = document.getElementById('playersList');
+            const count = Object.keys(players).length;
+            document.getElementById('playersCount').textContent = `Players: ${count}`;
+            
+            if (count === 0) {
+                list.innerHTML = 'No players yet';
+                return;
+            }
+            
+            let html = '';
+            Object.entries(players).forEach(([id, player]) => {
+                const isYou = id === currentPlayerId;
+                const timestamp = Date.now() - player.lastUpdate;
+                const isActive = timestamp < 30000; // Active if updated in last 30 seconds
+                
+                html += `
+                    <div class="player-item ${isYou ? 'self' : ''}">
+                        <div class="player-info">
+                            <div class="player-city">${isYou ? '📍 ' : '👤 '}${player.name}</div>
+                            <div class="player-temp">${player.city || 'Searching...'}</div>
+                            <div class="player-temp">${player.temp ? player.temp + '°' : 'Loading...'}</div>
+                        </div>
+                        <div>
+                            <span class="player-badge">${isActive ? '🟢 Online' : '⚫ Away'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+        
+        function updatePlayerLocation() {
+            if (!db || !currentCity) return;
+            
+            db.ref('players/' + currentPlayerId).set({
+                name: playerName,
+                city: currentCity,
+                temp: currentWeather?.main?.temp ? Math.round(currentWeather.main.temp) : null,
+                icon: currentWeather?.weather?.[0]?.icon,
+                lastUpdate: Date.now()
+            });
+        }
+        
+        function setUnit(unit) {
+            currentUnit = unit;
+            document.querySelectorAll('.unit-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            if (currentCity) {
+                searchWeather();
+            }
+        }
+        
+        async function searchWeather() {
+            const city = document.getElementById('searchInput').value.trim();
+            if (!city) {
+                showError('Please enter a city name');
+                return;
+            }
+            
+            showLoading();
+            clearError();
+            
+            try {
+                const response = await fetch(
+                    `${BASE_URL}/weather?q=${city}&units=${currentUnit}&appid=${API_KEY}`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('City not found');
+                }
+                
+                const data = await response.json();
+                currentCity = data.name;
+                currentWeather = data;
+                
+                if (!favorites.includes(city)) {
+                    favorites.push(city);
+                    localStorage.setItem('weatherFavorites', JSON.stringify(favorites));
+                    renderFavorites();
+                }
+                
+                updatePlayerLocation();
+                displayWeather(data);
+                
+            } catch (error) {
+                showError(error.message || 'Failed to fetch weather data');
+                showDefaultView();
+            }
+        }
+        
+        function displayWeather(currentData) {
+            const unitSymbol = currentUnit === 'metric' ? '°C' : '°F';
+            const speedUnit = currentUnit === 'metric' ? 'km/h' : 'mph';
+            const icon = weatherIcons[currentData.weather[0].icon] || '🌤️';
+            
+            const now = new Date().toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            let html = `
+                <div class="card current-weather">
+                    <div class="location">${currentData.name}, ${currentData.sys.country}</div>
+                    <div class="time">${now}</div>
+                    <div class="weather-main">
+                        <div class="weather-icon">${icon}</div>
+                        <div class="weather-info">
+                            <div class="temperature">${Math.round(currentData.main.temp)}${unitSymbol}</div>
+                            <div class="description">${currentData.weather[0].description}</div>
+                        </div>
+                    </div>
+                    <div class="weather-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Feels Like</div>
+                            <div class="detail-value">${Math.round(currentData.main.feels_like)}${unitSymbol}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Humidity</div>
+                            <div class="detail-value">${currentData.main.humidity}%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Wind</div>
+                            <div class="detail-value">${Math.round(currentData.wind.speed)} ${speedUnit}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Pressure</div>
+                            <div class="detail-value">${currentData.main.pressure} hPa</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Visibility</div>
+                            <div class="detail-value">${(currentData.visibility / 1000).toFixed(1)} km</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">UV Index</div>
+                            <div class="detail-value">N/A</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('weatherContainer').innerHTML = html;
+        }
+        
+        function renderFavorites() {
+            const list = document.getElementById('favoritesList');
+            if (favorites.length === 0) {
+                list.innerHTML = '<p style="color: #999;">No favorites yet</p>';
+                return;
+            }
+            
+            list.innerHTML = favorites.map(fav => 
+                `<button class="favorite-btn" onclick="quickSearch('${fav}')">${fav}</button>`
+            ).join('');
+        }
+        
+        function quickSearch(city) {
+            document.getElementById('searchInput').value = city;
+            searchWeather();
+        }
+        
+        function showLoading() {
+            document.getElementById('weatherContainer').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading weather data...</p>
+                </div>
+            `;
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorContainer');
+            errorDiv.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        function clearError() {
+            document.getElementById('errorContainer').innerHTML = '';
+        }
+        
+        function showDefaultView() {
+            document.getElementById('weatherContainer').innerHTML = `
+                <div class="no-data">
+                    Enter a city name to view weather information
+                </div>
+            `;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('playerName').value = playerName;
+            document.getElementById('playerName').addEventListener('change', (e) => {
+                playerName = e.target.value || 'Anonymous Player';
+                localStorage.setItem('playerName', playerName);
+                if (currentCity) updatePlayerLocation();
+            });
+            
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchWeather();
+            });
+            
+            renderFavorites();
+            
+            // Initialize Firebase
+            initializeFirebase();
+            
+            // Update player location periodically
+            setInterval(updatePlayerLocation, 5000);
+            
+            if (favorites.length > 0) {
+                document.getElementById('searchInput').value = favorites[0];
+                searchWeather();
+            } else {
+                showDefaultView();
+            }
+        });
+    </script>
+</body>
+</html>
