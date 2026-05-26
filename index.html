@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WHO IS HUGH? - onlyhuu</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #fff; min-height: 100vh; overflow-x: hidden; }
+        
+        #intro { position: fixed; z-index: 9999; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #intro.hidden { display: none; }
+        #introImg { width: 100%; height: 100%; object-fit: cover; opacity: 0; animation: introFade 3s ease-in-out forwards; }
+        #introText { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); text-align: center; opacity: 0; animation: textFade 4s ease-in-out 1s forwards; }
+        #introText h1 { font-size: 3em; color: #ff1493; text-shadow: 0 0 20px #ff1493; margin-bottom: 20px; }
+        #introText p { font-size: 1.2em; color: #aaa; }
+        #skipBtn { position: absolute; top: 20px; right: 20px; padding: 10px 20px; background: rgba(255,20,147,0.5); border: 1px solid #ff1493; color: #ff1493; cursor: pointer; border-radius: 5px; z-index: 10000; font-family: 'Courier New', monospace; }
+        #skipBtn:hover { background: #ff1493; color: #000; }
+        
+        @keyframes introFade { 0% { opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; } }
+        @keyframes textFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+        
+        .game-container { display: flex; max-width: 1400px; margin: 0 auto; height: 100vh; gap: 20px; padding: 20px; }
+        .left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .right-panel { width: 350px; background: rgba(0,0,0,0.7); border: 2px solid #8b008b; border-radius: 15px; padding: 20px; overflow-y: auto; max-height: 100vh; }
+        
+        .header { text-align: center; padding: 20px; background: rgba(0,0,0,0.7); border-radius: 10px; border: 2px solid #ff1493; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 20px rgba(255,20,147,0.5); } 50% { box-shadow: 0 0 40px rgba(255,20,147,0.8); } }
+        .header h1 { font-size: 2.5em; color: #ff1493; text-shadow: 0 0 20px #ff1493; letter-spacing: 3px; margin-bottom: 10px; }
+        .header p { color: #aaa; font-size: 0.9em; }
+        
+        .currency { background: rgba(0,0,0,0.7); border: 2px solid #00ff00; border-radius: 10px; padding: 20px; text-align: center; }
+        .currency .label { color: #00ff00; text-shadow: 0 0 10px #00ff00; margin-bottom: 10px; font-weight: bold; }
+        .currency .amount { font-size: 2.5em; font-weight: bold; color: #00ff00; text-shadow: 0 0 15px #00ff00; }
+        
+        .clicker { flex: 1; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 2px solid #8b008b; border-radius: 15px; position: relative; overflow: hidden; min-height: 400px; }
+        .click-btn { width: 250px; height: 250px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff1493, #8b008b); border: 5px solid #ff1493; font-size: 3em; cursor: pointer; transition: all 0.1s; box-shadow: 0 0 50px rgba(255,20,147,0.6); font-weight: bold; display: flex; align-items: center; justify-content: center; user-select: none; position: relative; color: #fff; font-family: 'Courier New', monospace; }
+        .click-btn::before { content: ''; position: absolute; width: 100%; height: 100%; background: radial-gradient(circle at 30% 30%, rgba(255,20,147,0.3), rgba(139,0,139,0.5)); pointer-events: none; border-radius: 50%; }
+        .click-btn-text { position: relative; z-index: 1; }
+        .click-btn:hover { transform: scale(1.05); box-shadow: 0 0 80px rgba(255,20,147,0.9); }
+        .click-btn:active { transform: scale(0.95); box-shadow: 0 0 30px rgba(255,20,147,0.5); }
+        
+        .feedback { position: absolute; pointer-events: none; font-weight: bold; font-size: 1.5em; animation: floatUp 1.5s ease-out forwards; font-family: 'Courier New', monospace; }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-100px) scale(0.5); opacity: 0; } }
+        
+        .sidebar-title { color: #ff1493; font-size: 1.2em; margin-bottom: 12px; border-bottom: 2px solid #ff1493; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 2px; }
+        .section { margin-bottom: 25px; }
+        
+        .upgrade-item, .achievement-item { background: rgba(50,10,50,0.8); border: 1px solid #8b008b; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .upgrade-item:hover:not(.disabled) { background: rgba(80,20,80,1); border-color: #ff1493; box-shadow: 0 0 15px rgba(255,20,147,0.4); transform: translateX(5px); }
+        .upgrade-item.disabled { opacity: 0.5; cursor: not-allowed; }
+        .upgrade-name { color: #00ff00; font-weight: bold; margin-bottom: 5px; }
+        .upgrade-cost { color: #ffaa00; font-size: 0.85em; margin-bottom: 5px; }
+        .upgrade-effect { color: #aaa; font-size: 0.8em; }
+        
+        .achievement-item { background: rgba(30,20,40,0.9); border: 2px solid #4169e1; }
+        .achievement-item.unlocked { background: rgba(50,40,70,0.9); border-color: #00ff00; }
+        .achievement-title { color: #4169e1; font-weight: bold; margin-bottom: 5px; }
+        .achievement-item.unlocked .achievement-title { color: #00ff00; }
+        .achievement-desc { color: #999; font-size: 0.8em; margin-bottom: 5px; }
+        .achievement-item.unlocked .achievement-desc { color: #bbb; }
+        .lore-text { color: #ffaa00; font-size: 0.75em; font-style: italic; border-left: 2px solid #ffaa00; padding-left: 8px; display: none; line-height: 1.4; }
+        .achievement-item.unlocked .lore-text { display: block; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: linear-gradient(135deg, #1a1a1a 0%, #2d1b2e 100%); border: 3px solid #ff1493; border-radius: 15px; padding: 40px; max-width: 600px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 100px rgba(255,20,147,0.6); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-img { width: 100%; max-height: 300px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #ff1493; object-fit: cover; display: none; animation: fadeIn 0.5s ease-out; }
+        .modal-img.show { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content h2 { color: #00ff00; margin-bottom: 20px; text-shadow: 0 0 10px #00ff00; }
+        .modal-content p { color: #fff; line-height: 1.6; margin-bottom: 15px; }
+        .close-btn { float: right; font-size: 2em; font-weight: bold; color: #ff1493; cursor: pointer; }
+        .close-btn:hover { color: #ff69b4; }
+        
+        .mystery-meter { background: rgba(0,0,0,0.7); border: 2px solid #4169e1; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .mystery-label { color: #4169e1; margin-bottom: 8px; font-weight: bold; }
+        .mystery-bar { width: 100%; height: 20px; background: rgba(50,50,100,0.5); border-radius: 10px; overflow: hidden; }
+        .mystery-fill { height: 100%; background: linear-gradient(90deg, #4169e1, #00ff00); width: 0%; transition: width 0.3s; box-shadow: 0 0 10px #4169e1; }
+        .progress-text { color: #4169e1; margin-top: 8px; font-weight: bold; }
+        
+        .stats { background: rgba(0,0,0,0.7); border: 2px solid #00ff00; border-radius: 10px; padding: 15px; }
+        .stat-item { color: #00ff00; margin: 5px 0; font-size: 0.9em; }
+        
+        .tutorial { background: rgba(65,105,225,0.2); border: 2px solid #4169e1; border-radius: 10px; padding: 15px; margin-bottom: 20px; font-size: 0.85em; line-height: 1.5; }
+        .tutorial h3 { color: #4169e1; margin-bottom: 8px; }
+        .tutorial p { color: #aaa; margin: 5px 0; }
+        
+        @media (max-width: 1024px) {
+            .game-container { flex-direction: column; }
+            .right-panel { width: 100%; max-height: 400px; }
+            .click-btn { width: 180px; height: 180px; font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div id="intro">
+        <button id="skipBtn">SKIP →</button>
+        <img id="introImg" alt="WHO IS HUGH?">
+        <div id="introText">
+            <h1>👁️ WHO IS HUGH? 👁️</h1>
+            <p>@onlyhuu - The mystery awaits...</p>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="left-panel">
+            <div class="header">
+                <h1>🔍 WHO IS HUGH? 🔍</h1>
+                <p>@onlyhuu - Click to uncover the truth...</p>
+            </div>
+
+            <div class="currency">
+                <div class="label">MYSTERY POINTS</div>
+                <div class="amount" id="currency">0</div>
+            </div>
+
+            <div class="clicker">
+                <button class="click-btn" id="clickBtn">
+                    <span class="click-btn-text">?</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="tutorial">
+                <h3>📖 HOW TO PLAY</h3>
+                <p>🔘 Click the "?" button to earn Mystery Points</p>
+                <p>🎯 Buy upgrades to increase earnings</p>
+                <p>🏆 Unlock achievements to reveal Hugh's story</p>
+            </div>
+
+            <div class="mystery-meter">
+                <div class="mystery-label">REVELATION PROGRESS</div>
+                <div class="mystery-bar">
+                    <div class="mystery-fill" id="mysteryFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+
+            <div class="section">
+                <div class="sidebar-title">🎯 UPGRADES</div>
+                <div id="upgradesContainer"></div>
+            </div>
+
+            <div class="section">
+                <div class="sidebar-title">🏆 ACHIEVEMENTS</div>
+                <div id="achievementsContainer"></div>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">Clicks: <span id="clicks">0</span></div>
+                <div class="stat-item">Crit Chance: <span id="crit">5</span>%</div>
+                <div class="stat-item">Per Click: <span id="perClick">1</span></div>
+                <div class="stat-item">Multiplier: <span id="mult">1</span>x</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img id="modalImg" class="modal-img" alt="Achievement">
+            <h2 id="modalTitle">Achievement!</h2>
+            <p id="modalLore"></p>
+        </div>
+    </div>
+
+    <script>
+        const HUGH_IMAGES = {
+            scenic: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==',
+            gremlin: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==',
+            sunset: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==',
+            spotlight: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==',
+            pointing: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==',
+            desk: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNQD/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjD/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWm5ybnJ2eoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD5/KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q=='
+        };
+
+        const gameState = {
+            currency: 0, clicks: 0, criticalHits: 0, perClick: 1, critChance: 5, multiplier: 1,
+            unlockedAchievements: new Set(),
+            upgrades: [
+                { id: 'jaxon', name: '📷 JAXON EVERYWHERE', cost: 100, effect: '+1 per click', bought: false, apply: s => { s.perClick += 1; } },
+                { id: 'matt', name: '🔒 MATT\'S GREMLIN PHASE', cost: 500, effect: '+5% crit', bought: false, apply: s => { s.critChance += 5; } },
+                { id: 'riley', name: '🌿 ASK RILEY', cost: 2000, effect: '+2x multiplier', bought: false, apply: s => { s.multiplier *= 2; } },
+                { id: 'obsession', name: '💫 OBSESSION', cost: 10000, effect: '+3/click + auto', bought: false, autoClick: true, apply: s => { s.perClick += 3; } },
+                { id: 'truth', name: '❓ SEEK THE TRUTH', cost: 50000, effect: '+10/click +30% crit', bought: false, apply: s => { s.perClick += 10; s.critChance += 30; } }
+            ],
+            achievements: [
+                { id: 'first', title: '❓ THE QUESTION', desc: 'Click once', req: s => s.clicks >= 1, img: 'scenic', lore: '"Who is Hugh?" You start clicking. The mystery begins. Is he real? Does he exist?' },
+                { id: 'curious', title: '🔍 CURIOUS NOW', desc: '100 MP earned', req: s => s.currency >= 100, img: 'pointing', lore: 'JAXON keeps saying "where\'s Hugh?" Jaxon appears in EVERY photo since 2005. Every. Single. One. Is Jaxon... protecting something?' },
+                { id: 'investigation', title: '🌑 DARK DISCOVERY', desc: '500 MP earned', req: s => s.currency >= 500, img: 'gremlin', lore: 'MATT hasn\'t left his room in 47 days. The smell is INDESCRIBABLE. He just stares at his monitor, muttering "The Plan... The Plan..." Is he hiding Hugh?' },
+                { id: 'truth_seeker', title: '🌿 GREEN KNOWLEDGE', desc: '2000 MP earned', req: s => s.currency >= 2000, img: 'sunset', lore: 'RILEY\'s smoking something. "Yo bro, you asking about Hugh?" *Takes hit* "That dude is like... the void, man. He EXISTS in the spaces between." Is Riley... enlightened?' },
+                { id: 'obsessed', title: '💫 OBSESSED', desc: '10000 MP earned', req: s => s.currency >= 10000, img: 'spotlight', lore: 'You\'re clicking obsessively. The group chat from 2018 mentions "The Plan" 47 times. Someone wrote "Nobody leaves the friend group." Jaxon... Jaxon was always the photographer.' },
+                { id: 'revelation', title: '⚡ THE PHOTOGRAPHER', desc: '50000 MP earned', req: s => s.currency >= 50000, img: 'pointing', lore: 'JAXON is the PHOTOGRAPHER. Every important moment. Every memory. He\'s been DOCUMENTING everything. Protecting the scene. Protecting WHO?' },
+                { id: 'critical', title: '💥 CRITICAL TRUTH', desc: '100 critical hits', req: s => gameState.criticalHits >= 100, img: 'desk', lore: 'Your hands shake. They\'re protecting someone. MATT locked away. JAXON documenting. RILEY speaking in riddles. They\'re ALL protecting one person. One secret.' },
+                { id: 'final', title: '👁️ WHO IS HUGH?', desc: '100000 MP earned', req: s => s.currency >= 100000, img: 'spotlight', lore: 'HUGH IS REAL. He\'s listening right now. Jaxon protects him because people were LOOKING. Matt hides because the world is WATCHING. Riley forgets because it hurts. And you... you\'ve been investigating someone who never wanted to be found. HUGH IS THE ONE. And they\'ll never tell. 👁️' }
+            ]
+        };
+
+        let introPlayed = false;
+
+        function playIntro() {
+            if (introPlayed) return;
+            introPlayed = true;
+            document.getElementById('introImg').src = HUGH_IMAGES.spotlight;
+            setTimeout(() => document.getElementById('intro').classList.add('hidden'), 6000);
+        }
+
+        function closeModal() { document.getElementById('modal').classList.remove('show'); }
+        function showAchievement(ach) {
+            document.getElementById('modalImg').src = HUGH_IMAGES[ach.img] || '';
+            document.getElementById('modalImg').classList.add('show');
+            document.getElementById('modalTitle').textContent = ach.title;
+            document.getElementById('modalLore').textContent = `"${ach.lore}"`;
+            document.getElementById('modal').classList.add('show');
+            playSound('unlock');
+        }
+
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                if (type === 'click') { osc.frequency.value = 800; gain.gain.setValueAtTime(0.1, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1); }
+                else if (type === 'crit') { osc.frequency.value = 1200; gain.gain.setValueAtTime(0.15, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.15); }
+                else if (type === 'unlock') { osc.frequency.value = 1000; gain.gain.setValueAtTime(0.1, ctx.currentTime); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3); }
+            } catch(e) {}
+        }
+
+        function renderUpgrades() {
+            const c = document.getElementById('upgradesContainer');
+            c.innerHTML = '';
+            gameState.upgrades.forEach(u => {
+                const canAfford = gameState.currency >= u.cost;
+                const div = document.createElement('div');
+                div.className = `upgrade-item ${u.bought ? 'disabled' : ''} ${!canAfford && !u.bought ? 'disabled' : ''}`;
+                div.innerHTML = `<div class="upgrade-name">${u.name}</div><div class="upgrade-cost">${u.cost} MP</div><div class="upgrade-effect">${u.effect}</div>`;
+                if (!u.bought && canAfford) div.onclick = () => buyUpgrade(u);
+                c.appendChild(div);
+            });
+        }
+
+        function renderAchievements() {
+            const c = document.getElementById('achievementsContainer');
+            c.innerHTML = '';
+            gameState.achievements.forEach(a => {
+                const unlocked = gameState.unlockedAchievements.has(a.id);
+                const div = document.createElement('div');
+                div.className = `achievement-item ${unlocked ? 'unlocked' : ''}`;
+                div.innerHTML = `<div class="achievement-title">${a.title}</div><div class="achievement-desc">${a.desc}</div><div class="lore-text">"${a.lore}"</div>`;
+                c.appendChild(div);
+            });
+        }
+
+        function buyUpgrade(u) {
+            if (gameState.currency >= u.cost && !u.bought) {
+                gameState.currency -= u.cost;
+                u.bought = true;
+                u.apply(gameState);
+                renderUpgrades();
+                updateUI();
+                checkAchievements();
+                playSound('unlock');
+                if (u.autoClick) setInterval(() => performClick(1), 2000);
+            }
+        }
+
+        function checkAchievements() {
+            gameState.achievements.forEach(a => {
+                if (!gameState.unlockedAchievements.has(a.id) && a.req(gameState)) {
+                    gameState.unlockedAchievements.add(a.id);
+                    showAchievement(a);
+                    renderAchievements();
+                }
+            });
+        }
+
+        function performClick(n = 1) {
+            const isCrit = Math.random() * 100 < gameState.critChance;
+            const gain = (gameState.perClick * gameState.multiplier * (isCrit ? 2 : 1)) * n;
+            gameState.currency += gain;
+            gameState.clicks += n;
+            if (isCrit) gameState.criticalHits++;
+            
+            const fb = document.createElement('div');
+            fb.className = 'feedback';
+            fb.textContent = isCrit ? `⚡ +${Math.floor(gain)}` : `+${Math.floor(gain)}`;
+            fb.style.color = isCrit ? '#ffaa00' : '#00ff00';
+            fb.style.left = '50%';
+            fb.style.top = '50%';
+            document.querySelector('.clicker').appendChild(fb);
+            
+            updateUI();
+            checkAchievements();
+            playSound(isCrit ? 'crit' : 'click');
+        }
+
+        function updateUI() {
+            document.getElementById('currency').textContent = Math.floor(gameState.currency);
+            document.getElementById('clicks').textContent = gameState.clicks;
+            document.getElementById('crit').textContent = gameState.critChance;
+            document.getElementById('perClick').textContent = Math.floor(gameState.perClick);
+            document.getElementById('mult').textContent = gameState.multiplier;
+            
+            const prog = Math.min(gameState.currency / 100000 * 100, 100);
+            document.getElementById('mysteryFill').style.width = prog + '%';
+            document.getElementById('progressText').textContent = Math.floor(prog) + '%';
+        }
+
+        document.getElementById('clickBtn').addEventListener('click', () => performClick());
+        document.getElementById('skipBtn').addEventListener('click', () => {
+            document.getElementById('intro').classList.add('hidden');
+            introPlayed = true;
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            playIntro();
+            renderUpgrades();
+            renderAchievements();
+            updateUI();
+        });
+
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
