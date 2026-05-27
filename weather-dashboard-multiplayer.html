@@ -295,82 +295,6 @@
             font-weight: bold;
         }
         
-        .forecast-section {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .forecast-title {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #667eea;
-        }
-        
-        .forecast-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 15px;
-        }
-        
-        .forecast-item {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            transition: all 0.3s;
-        }
-        
-        .forecast-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        
-        .forecast-day {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 0.9em;
-        }
-        
-        .forecast-icon {
-            font-size: 2.5em;
-            margin: 10px 0;
-        }
-        
-        .forecast-temp {
-            font-size: 1.1em;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .forecast-temp-min {
-            font-size: 0.85em;
-            color: #666;
-        }
-        
-        .alerts {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 20px;
-            border-radius: 10px;
-        }
-        
-        .alerts h3 {
-            color: #856404;
-            margin-bottom: 10px;
-        }
-        
-        .alert-item {
-            color: #856404;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-        }
-        
-        .alert-item:last-child {
-            border-bottom: none;
-        }
-        
         .players-list {
             background: white;
             padding: 20px;
@@ -394,18 +318,11 @@
             margin-bottom: 10px;
             border-radius: 8px;
             border-left: 4px solid #667eea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
         
         .player-item.self {
             border-left-color: #4caf50;
             background: #f0f8f0;
-        }
-        
-        .player-info {
-            flex: 1;
         }
         
         .player-city {
@@ -464,32 +381,13 @@
             .dashboard {
                 grid-template-columns: 1fr;
             }
-            
-            .weather-main {
-                flex-direction: column;
-                gap: 20px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .temperature {
-                font-size: 2.5em;
-            }
-            
-            .multiplayer-status {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌤️ Weather Dashboard - Multiplayer</h1>
+            <h1>🌤️ Weather Dashboard - Multiplayer 🔥</h1>
             <p>Real-time weather with friends</p>
         </div>
         
@@ -505,12 +403,7 @@
         
         <div class="search-section">
             <div class="search-box">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Enter city name..."
-                    autocomplete="off"
-                >
+                <input type="text" id="searchInput" placeholder="Enter city name..." autocomplete="off">
                 <button onclick="searchWeather()">Search</button>
             </div>
             <div class="unit-toggle">
@@ -526,7 +419,7 @@
                 <div id="weatherContainer"></div>
             </div>
             <div class="sidebar">
-                <div class="card players-list">
+                <div class="players-list">
                     <div class="players-title">👥 Players Online</div>
                     <div id="playersList">No players yet</div>
                 </div>
@@ -544,21 +437,17 @@
         
         let currentUnit = 'metric';
         let favorites = JSON.parse(localStorage.getItem('weatherFavorites')) || [];
-        let playerName = localStorage.getItem('playerName') || 'Anonymous Player';
+        let playerName = localStorage.getItem('playerName') || 'Anonymous';
         let currentCity = null;
         let currentWeather = null;
         let db = null;
         let currentPlayerId = generatePlayerId();
         
         const weatherIcons = {
-            '01d': '☀️', '01n': '🌙',
-            '02d': '⛅', '02n': '☁️',
-            '03d': '☁️', '03n': '☁️',
-            '04d': '☁️', '04n': '☁️',
-            '09d': '🌧️', '09n': '🌧️',
-            '10d': '🌦️', '10n': '🌧️',
-            '11d': '⛈️', '11n': '⛈️',
-            '13d': '❄️', '13n': '❄️',
+            '01d': '☀️', '01n': '🌙', '02d': '⛅', '02n': '☁️',
+            '03d': '☁️', '03n': '☁️', '04d': '☁️', '04n': '☁️',
+            '09d': '🌧️', '09n': '🌧️', '10d': '🌦️', '10n': '🌧️',
+            '11d': '⛈️', '11n': '⛈️', '13d': '❄️', '13n': '❄️',
             '50d': '🌫️', '50n': '🌫️'
         };
         
@@ -572,7 +461,6 @@
         }
         
         function initializeFirebase() {
-            // REPLACE THESE WITH YOUR FIREBASE CONFIG
             const firebaseConfig = {
                 apiKey: "YOUR_API_KEY",
                 authDomain: "YOUR_AUTH_DOMAIN",
@@ -591,7 +479,7 @@
                 setupRealtimeListeners();
                 updateFirebaseStatus(true);
             } catch (error) {
-                console.error('Firebase initialization error:', error);
+                console.error('Firebase error:', error);
                 updateFirebaseStatus(false);
             }
         }
@@ -601,28 +489,17 @@
             if (online) {
                 badge.textContent = '✅ Online';
                 badge.classList.add('online');
-                badge.classList.remove('offline');
             } else {
-                badge.textContent = '❌ Offline';
+                badge.textContent = '❌ Offline (Demo Mode)';
                 badge.classList.add('offline');
-                badge.classList.remove('online');
             }
         }
         
         function setupRealtimeListeners() {
             if (!db) return;
-            
-            // Listen for all players
             db.ref('players').on('value', (snapshot) => {
                 const players = snapshot.val() || {};
                 displayPlayers(players);
-            });
-            
-            // Clean up when this player leaves
-            window.addEventListener('beforeunload', () => {
-                if (db) {
-                    db.ref('players/' + currentPlayerId).remove();
-                }
             });
         }
         
@@ -639,155 +516,87 @@
             let html = '';
             Object.entries(players).forEach(([id, player]) => {
                 const isYou = id === currentPlayerId;
-                const timestamp = Date.now() - player.lastUpdate;
-                const isActive = timestamp < 30000; // Active if updated in last 30 seconds
-                
                 html += `
                     <div class="player-item ${isYou ? 'self' : ''}">
-                        <div class="player-info">
-                            <div class="player-city">${isYou ? '📍 ' : '👤 '}${player.name}</div>
-                            <div class="player-temp">${player.city || 'Searching...'}</div>
-                            <div class="player-temp">${player.temp ? player.temp + '°' : 'Loading...'}</div>
-                        </div>
-                        <div>
-                            <span class="player-badge">${isActive ? '🟢 Online' : '⚫ Away'}</span>
-                        </div>
+                        <div class="player-city">${isYou ? '📍 YOU: ' : '👤 '}${player.name}</div>
+                        <div class="player-temp">${player.city || 'Searching...'}</div>
+                        <div class="player-temp">${player.temp ? player.temp + '°' : 'Loading...'}</div>
                     </div>
                 `;
             });
-            
             list.innerHTML = html;
         }
         
         function updatePlayerLocation() {
             if (!db || !currentCity) return;
-            
             db.ref('players/' + currentPlayerId).set({
                 name: playerName,
                 city: currentCity,
                 temp: currentWeather?.main?.temp ? Math.round(currentWeather.main.temp) : null,
-                icon: currentWeather?.weather?.[0]?.icon,
                 lastUpdate: Date.now()
             });
         }
         
         function setUnit(unit) {
             currentUnit = unit;
-            document.querySelectorAll('.unit-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+            document.querySelectorAll('.unit-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
-            
-            if (currentCity) {
-                searchWeather();
-            }
+            if (currentCity) searchWeather();
         }
         
         async function searchWeather() {
             const city = document.getElementById('searchInput').value.trim();
-            if (!city) {
-                showError('Please enter a city name');
-                return;
-            }
-            
-            showLoading();
-            clearError();
+            if (!city) return;
             
             try {
-                const response = await fetch(
-                    `${BASE_URL}/weather?q=${city}&units=${currentUnit}&appid=${API_KEY}`
-                );
-                
-                if (!response.ok) {
-                    throw new Error('City not found');
-                }
-                
+                const response = await fetch(`${BASE_URL}/weather?q=${city}&units=${currentUnit}&appid=${API_KEY}`);
+                if (!response.ok) throw new Error('City not found');
                 const data = await response.json();
+                
                 currentCity = data.name;
                 currentWeather = data;
-                
                 if (!favorites.includes(city)) {
                     favorites.push(city);
                     localStorage.setItem('weatherFavorites', JSON.stringify(favorites));
                     renderFavorites();
                 }
-                
                 updatePlayerLocation();
                 displayWeather(data);
-                
             } catch (error) {
-                showError(error.message || 'Failed to fetch weather data');
-                showDefaultView();
+                alert('Error: ' + error.message);
             }
         }
         
-        function displayWeather(currentData) {
+        function displayWeather(data) {
             const unitSymbol = currentUnit === 'metric' ? '°C' : '°F';
             const speedUnit = currentUnit === 'metric' ? 'km/h' : 'mph';
-            const icon = weatherIcons[currentData.weather[0].icon] || '🌤️';
+            const icon = weatherIcons[data.weather[0].icon] || '🌤️';
+            const now = new Date().toLocaleString();
             
-            const now = new Date().toLocaleString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-            
-            let html = `
+            document.getElementById('weatherContainer').innerHTML = `
                 <div class="card current-weather">
-                    <div class="location">${currentData.name}, ${currentData.sys.country}</div>
+                    <div class="location">${data.name}, ${data.sys.country}</div>
                     <div class="time">${now}</div>
                     <div class="weather-main">
                         <div class="weather-icon">${icon}</div>
                         <div class="weather-info">
-                            <div class="temperature">${Math.round(currentData.main.temp)}${unitSymbol}</div>
-                            <div class="description">${currentData.weather[0].description}</div>
+                            <div class="temperature">${Math.round(data.main.temp)}${unitSymbol}</div>
+                            <div class="description">${data.weather[0].description}</div>
                         </div>
                     </div>
                     <div class="weather-details">
-                        <div class="detail-item">
-                            <div class="detail-label">Feels Like</div>
-                            <div class="detail-value">${Math.round(currentData.main.feels_like)}${unitSymbol}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Humidity</div>
-                            <div class="detail-value">${currentData.main.humidity}%</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Wind</div>
-                            <div class="detail-value">${Math.round(currentData.wind.speed)} ${speedUnit}</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Pressure</div>
-                            <div class="detail-value">${currentData.main.pressure} hPa</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Visibility</div>
-                            <div class="detail-value">${(currentData.visibility / 1000).toFixed(1)} km</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">UV Index</div>
-                            <div class="detail-value">N/A</div>
-                        </div>
+                        <div class="detail-item"><div class="detail-label">Feels</div><div class="detail-value">${Math.round(data.main.feels_like)}${unitSymbol}</div></div>
+                        <div class="detail-item"><div class="detail-label">Humidity</div><div class="detail-value">${data.main.humidity}%</div></div>
+                        <div class="detail-item"><div class="detail-label">Wind</div><div class="detail-value">${Math.round(data.wind.speed)} ${speedUnit}</div></div>
+                        <div class="detail-item"><div class="detail-label">Pressure</div><div class="detail-value">${data.main.pressure} hPa</div></div>
                     </div>
                 </div>
             `;
-            
-            document.getElementById('weatherContainer').innerHTML = html;
         }
         
         function renderFavorites() {
             const list = document.getElementById('favoritesList');
-            if (favorites.length === 0) {
-                list.innerHTML = '<p style="color: #999;">No favorites yet</p>';
-                return;
-            }
-            
-            list.innerHTML = favorites.map(fav => 
-                `<button class="favorite-btn" onclick="quickSearch('${fav}')">${fav}</button>`
-            ).join('');
+            list.innerHTML = favorites.map(f => `<button class="favorite-btn" onclick="quickSearch('${f}')">${f}</button>`).join('');
         }
         
         function quickSearch(city) {
@@ -795,36 +604,10 @@
             searchWeather();
         }
         
-        function showLoading() {
-            document.getElementById('weatherContainer').innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <p>Loading weather data...</p>
-                </div>
-            `;
-        }
-        
-        function showError(message) {
-            const errorDiv = document.getElementById('errorContainer');
-            errorDiv.innerHTML = `<div class="error">${message}</div>`;
-        }
-        
-        function clearError() {
-            document.getElementById('errorContainer').innerHTML = '';
-        }
-        
-        function showDefaultView() {
-            document.getElementById('weatherContainer').innerHTML = `
-                <div class="no-data">
-                    Enter a city name to view weather information
-                </div>
-            `;
-        }
-        
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('playerName').value = playerName;
             document.getElementById('playerName').addEventListener('change', (e) => {
-                playerName = e.target.value || 'Anonymous Player';
+                playerName = e.target.value || 'Anonymous';
                 localStorage.setItem('playerName', playerName);
                 if (currentCity) updatePlayerLocation();
             });
@@ -834,18 +617,12 @@
             });
             
             renderFavorites();
-            
-            // Initialize Firebase
             initializeFirebase();
-            
-            // Update player location periodically
             setInterval(updatePlayerLocation, 5000);
             
             if (favorites.length > 0) {
                 document.getElementById('searchInput').value = favorites[0];
                 searchWeather();
-            } else {
-                showDefaultView();
             }
         });
     </script>
